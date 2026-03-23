@@ -50,12 +50,8 @@ app.use("/api/v1/companies", companyRoutes);
 app.use("/api/v1/jobs", jobRoutes);
 app.use("/api/v1/applications", applicationRoutes);
 
-// --- SERVE FRONTEND ---
-app.use(express.static(path.join(__dirname, "frontend", "dist")));
-
-// --- SPA CATCH-ALL (FIXED ROUTE) ---
-app.get("*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+app.get("/", (req, res) => {
+  res.send("API is running...");
 });
 
 // --- START SERVER ---
