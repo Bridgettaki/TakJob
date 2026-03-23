@@ -1,52 +1,65 @@
-// const express= require('express'); //old way
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./utils/db.js";
 import userRoutes from "./routes/user.route.js";
-import companyRoutes from"./routes/company.route.js";
+import companyRoutes from "./routes/company.route.js";
 import jobRoutes from "./routes/job.route.js";
 import applicationRoutes from "./routes/application.route.js";
 import "./models/application.model.js";
 import path from "path";
-dotenv.config({});
 
-const app= express();
-const _dirname = path.resolve();
-const isProduction = process.env.NODE_ENV === 'production';
+dotenv.config();
 
-// ---  MIDDLEWARES ---
+const app = express();
+const __dirname = path.resolve();
+
+// --- MIDDLEWARES ---
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-const corsOptions = {
-    origin: isProduction ? process.env.PROD_API_BASE_URL : process.env.DEV_API_BASE_URL,
-    credentials: true,  //so that frontend can send cookie (token) with the requests
-}
-app.use(cors(corsOptions));
+// ✅ FIXED CORS (robust version)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://takjob-1.onrender.com"
+];
 
-const PORT= process.env.PORT || 3000;
+app.use(cors({
+  origin: function (origin, callback) {
+    // allow requests with no origin (like Postman)
+    if (!origin) return callback(null, true);
 
-// ---  API ROUTES ---
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+}));
+
+// --- PORT ---
+const PORT = process.env.PORT || 3000;
+
+// --- API ROUTES ---
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/companies", companyRoutes);
 app.use("/api/v1/jobs", jobRoutes);
 app.use("/api/v1/applications", applicationRoutes);
 
+// --- SERVE FRONTEND ---
+app.use(express.static(path.join(__dirname, "frontend", "dist")));
 
-// ---  SERVE STATIC ASSETS ---
-app.use(express.static(path.join(_dirname, "/frontend/dist")));
+// --- SPA CATCH-ALL (FIXED ROUTE) ---
+app.get("*", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+});
 
-// ---  THE SPA CATCH-ALL/WILDCARD ROUTE ---
-// Any request that doesn't match an API route above will be sent the index.html file instead of showing a 404 error
-app.get('/{*any}', ( _ , res)=>{
-    res.sendFile(path.resolve(_dirname, "frontend", "dist", "index.html"));
-})
-
-// START THE SERVER
-app.listen(PORT, ()=>{
-    connectDB();
-    console.log(`Server is running at port ${PORT}`)
-})
+// --- START SERVER ---
+app.listen(PORT, async () => {
+  console.log(`Server is running at port ${PORT}`);
+  await connectDB();
+});

@@ -8,7 +8,7 @@ import { RefreshCw } from 'lucide-react';
 const filterData = [
     {
         fitlerType: "Location",
-        array: ["Delhi", "Gurugram", "Noida", "Bengaluru", "Hyderabad", "Remote"]
+        array: ["Cape Town", "Johannesburg", "Durban", "Bloemfontein", "Remote"]
     },
     {
         fitlerType: "Role",
@@ -16,7 +16,7 @@ const filterData = [
     },
     // {
     //     fitlerType: "Salary",
-    //     array: ["0-3 LPA", " 3-6 LPA", "6-12 LPA", "12 LPA+"]
+    //     array: ["7000-12,000", " 18,000-25,000 LPA", "5000-12,000 LPA"]
     // },
 ]
 
@@ -48,26 +48,37 @@ const FilterCard = ({ useGlobal = true, onChange }) => {
                 <span onClick={handleResetFilter} className='cursor-pointer w-5 h-5'> <RefreshCw className='hover:opacity-70' /></span>
             </h1>
             <hr className='mt-3' />
-            <RadioGroup value={selectedValue} onValueChange={handleChange}>
-                {
-                    filterData.map((data, index) => (
-                        <div>
-                            <h1 className='font-bold text-lg'>{data.fitlerType}</h1>
-                            {
-                                data.array.map((item, idx) => {
-                                    const itemId = `id${index}-${idx}`;
-                                    return (
-                                        <div className='flex space-x-2 my-2 items-center'>
-                                            <RadioGroupItem className={'cursor-pointer'} value={item} id={itemId} />
-                                            <Label className={'cursor-pointer'} htmlFor={itemId}> {item}</Label>
-                                        </div>
-                                    )
-                                })
-                            }
-                        </div>
-                    ))
-                }
-            </RadioGroup>
+           <RadioGroup value={selectedValue} onValueChange={handleChange}>
+    {filterData.map((data, index) => (
+        <div key={index}>
+            <h1 className='font-bold text-lg'>{data.fitlerType}</h1>
+
+            {data.array.map((item, idx) => {
+                const itemId = `id${index}-${idx}`;
+
+                return (
+                    <div
+                        key={itemId}
+                        className='flex space-x-2 my-2 items-center'
+                    >
+                        <RadioGroupItem
+                            className='cursor-pointer'
+                            value={item}
+                            id={itemId}
+                        />
+                        <Label
+                            className='cursor-pointer'
+                            htmlFor={itemId}
+                        >
+                            {item}
+                        </Label>
+                    </div>
+                );
+            })}
+        </div>
+    ))}
+</RadioGroup>
+
         </div>
     )
 }

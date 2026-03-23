@@ -1,19 +1,18 @@
-import { setLoading } from '../../redux/authSlice'
-import { signupSchema } from '../../schema/authSchema'
-import { USER_API_ENDPOINT } from '../../utils/constants'
-import axios from 'axios'
-import { Loader2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { Link, useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
-import { Button } from '../../components/ui/button'
-import { Input } from '../../components/ui/input'
-import { Label } from '../../components/ui/label'
-import { RadioGroup } from '../../components/ui/radio-group'
+import { setLoading } from '../../redux/authSlice';
+import { signupSchema } from '../../schema/authSchema';
+import { USER_API_ENDPOINT } from '../../utils/constants';
+import axios from 'axios';
+import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { RadioGroup } from '../../components/ui/radio-group';
 
 const Signup = () => {
-
     const [input, setInput] = useState({
         fullName: "",
         email: "",
@@ -22,193 +21,205 @@ const Signup = () => {
         confirmPassword: "",
         role: "",
         file: null
-    })
+    });
+
     const [errors, setErrors] = useState({});
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { loading, user } = useSelector(store => store.auth);
-    
-    useEffect(() => {   
-        if (user) {
-            navigate('/');
-        }
-    }, [navigate, user])
 
-    //for handling form input data
+    useEffect(() => {
+        if (user) navigate('/');
+    }, [user, navigate]);
+
+    // handle text inputs
     const handleFormChange = (e) => {
         setInput({ ...input, [e.target.name]: e.target.value });
-    }
+    };
 
-    //for handling profile pic 
+    // handle file input
     const handleFormFileChange = (e) => {
         setInput({ ...input, file: e.target.files?.[0] });
-    }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        //for form-validation using zod
+        // Zod validation
         const result = signupSchema.safeParse(input);
+
         if (!result.success) {
-            const { fieldErrors } = result.error.flatten();
-            setErrors(fieldErrors);
+            setErrors(result.error.flatten().fieldErrors);
             return;
         }
 
-        setErrors({});  // to clear old validation messages
+        setErrors({});
 
-        const formData = new FormData();  //built-in special object provided by the browser, automatically builds your form submission with: key-value pairs and file blobs
-        formData.append('fullName', input.fullName);
-        formData.append('email', input.email);
-        formData.append('phoneNumber', input.phoneNumber);
-        formData.append('password', input.password);
-        formData.append('role', input.role);
+        // build form data
+        const formData = new FormData();
+        formData.append("fullName", input.fullName);
+        formData.append("email", input.email);
+        formData.append("phoneNumber", input.phoneNumber);
+        formData.append("password", input.password);
+        formData.append("role", input.role);
+
         if (input.file) {
-            formData.append('file', input.file);
+            formData.append("file", input.file);
         }
 
         try {
             dispatch(setLoading(true));
-            //axios.post(url, data, config);
-            const res = await axios.post(`${USER_API_ENDPOINT}/auth/register`, formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data"   //Lets the backend know we're sending some file data (like png, jpeg, etc)
-                },
-                withCredentials: true  //to include cookies (like token) from backend in the request
-            });
 
-            if (res.data.success) {
-                navigate('/login');
+            console.log("Submitting signup...");
+
+            const res = await axios.post(
+                `${USER_API_ENDPOINT}/auth/register`,
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                    withCredentials: true
+                }
+            );
+
+            if (res.data?.success) {
                 toast.success(res.data.message);
+                navigate('/login');
             }
+
         } catch (error) {
-            console.log(error);
-            toast.error(error.response.data.message || "Signup failed. Please try again.");
+            console.log("Signup error:", error);
+
+            const message =
+                error?.response?.data?.message ||
+                error.message ||
+                "Signup failed. Try again.";
+
+            toast.error(message);
+
         } finally {
             dispatch(setLoading(false));
         }
-    }
+    };
 
     return (
-        <div>
-            <div className='flex items-center justify-center max-w-7xl mx-auto'>
-                <form onSubmit={handleSubmit} className='w-1/2 border border-gray-200 rounded-md p-4 my-10'>
-                    <h1 className='font-bold text-xl mb-5'>Sign Up</h1>
-                    <div className='my-4'>
-                        <Label className='my-1'> Full Name</Label>
-                        <Input
-                            type='text'
-                            placeholder='John Doe'
-                            name='fullName'
-                            value={input.fullName}
+        <div className='flex items-center justify-center max-w-7xl mx-auto'>
+            <form onSubmit={handleSubmit} className='w-1/2 border border-gray-200 rounded-md p-4 my-10'>
+                <h1 className='font-bold text-xl mb-5'>Sign Up</h1>
+
+                {/* Full Name */}
+                <div className='my-4'>
+                    <Label>Full Name</Label>
+                    <Input
+                        name='fullName'
+                        value={input.fullName}
+                        onChange={handleFormChange}
+                        placeholder='John Doe'
+                    />
+                    {errors?.fullName?.map((err, i) => (
+                        <span key={i} className='text-red-500 text-sm'>{err}</span>
+                    ))}
+                </div>
+
+                {/* Email */}
+                <div className='my-4'>
+                    <Label>Email</Label>
+                    <Input
+                        name='email'
+                        type='email'
+                        value={input.email}
+                        onChange={handleFormChange}
+                    />
+                    {errors?.email && <span className='text-red-500 text-sm'>{errors.email}</span>}
+                </div>
+
+                {/* Phone */}
+                <div className='my-4'>
+                    <Label>Phone</Label>
+                    <Input
+                        name='phoneNumber'
+                        value={input.phoneNumber}
+                        onChange={handleFormChange}
+                    />
+                    {errors?.phoneNumber && <span className='text-red-500 text-sm'>{errors.phoneNumber}</span>}
+                </div>
+
+                {/* Password */}
+                <div className='my-4'>
+                    <Label>Password</Label>
+                    <Input
+                        name='password'
+                        type='password'
+                        value={input.password}
+                        onChange={handleFormChange}
+                    />
+                    {errors?.password?.map((err, i) => (
+                        <span key={i} className='text-red-500 text-sm'>{err}</span>
+                    ))}
+                </div>
+
+                {/* Confirm Password */}
+                <div className='my-4'>
+                    <Label>Confirm Password</Label>
+                    <Input
+                        name='confirmPassword'
+                        type='password'
+                        value={input.confirmPassword}
+                        onChange={handleFormChange}
+                    />
+                    {errors?.confirmPassword && (
+                        <span className='text-red-500 text-sm'>{errors.confirmPassword}</span>
+                    )}
+                </div>
+
+                {/* Role */}
+                <RadioGroup className="flex gap-4 my-4">
+                    <label>
+                        <input
+                            type="radio"
+                            name="role"
+                            value="applicant"
+                            checked={input.role === "applicant"}
                             onChange={handleFormChange}
-                        />
+                        /> Applicant
+                    </label>
 
-                        {errors?.fullName?.map((err, i) => (
-                            <span key={i} className="text-sm text-red-500 block">{err}</span>
-                        ))}
-                    </div>
-                    <div className='my-4'>
-                        <Label className='my-1'>Email</Label>
-                        <Input
-                            type='email'
-                            placeholder='john@gmail.com'
-                            name='email'
-                            value={input.email}
+                    <label>
+                        <input
+                            type="radio"
+                            name="role"
+                            value="recruiter"
+                            checked={input.role === "recruiter"}
                             onChange={handleFormChange}
-                        />
-                        {errors && errors.email && <span className='text-sm text-red-500'> {errors.email}</span>}
-                    </div>
-                    <div className='my-4'>
-                        <Label className='my-1'> Phone No.</Label>
-                        <Input
-                            type='tel'
-                            placeholder='8800880088'
-                            name='phoneNumber'
-                            value={input.phoneNumber}
-                            onChange={handleFormChange}
+                        /> Recruiter
+                    </label>
+                </RadioGroup>
 
-                        />
-                        {errors && errors.phoneNumber && <span className='text-sm text-red-500'> {errors.phoneNumber}</span>}
-                    </div>
-                    <div className='my-4'>
-                        <Label className='my-1'> Password</Label>
-                        <Input
-                            type='password'
-                            placeholder='password'
-                            name='password'
-                            value={input.password}
-                            onChange={handleFormChange}
-                        />
-                        {errors?.password?.map((err, i) => (
-                            <span key={i} className="text-sm text-red-500 block">{err}</span>
-                        ))}
-                    </div>
-                    <div className='my-4'>
-                        <Label className='my-1'>Confirm Password</Label>
-                        <Input
-                            type='password'
-                            placeholder='Confirm password'
-                            name='confirmPassword'
-                            value={input.confirmPassword}
-                            onChange={handleFormChange}
-                        />
-                        {errors && errors.confirmPassword && <span className='text-sm text-red-500'> {errors.confirmPassword}</span>}
-                    </div>
+                {/* File */}
+                <div className='my-4'>
+                    <Label>Profile Photo</Label>
+                    <Input
+                        type='file'
+                        accept='image/*'
+                        onChange={handleFormFileChange}
+                    />
+                </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 my-5">
-                        <RadioGroup className="flex flex-col sm:flex-row sm:items-center gap-4" >
-                            <div className="flex items-center space-x-2">
-                                <input type="radio"
-                                    name='role'
-                                    id='applicant'
-                                    className='cursor-pointer'
-                                    value='applicant'
-                                    onChange={handleFormChange}
-                                    checked={input.role === 'applicant'}
-                                />
-                                <Label htmlFor="applicant">Applicant</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <input type="radio"
-                                    name='role'
-                                    id='recruiter'
-                                    value='recruiter'
-                                    onChange={handleFormChange}
-                                    checked={input.role === 'recruiter'}
-                                />
-                                <Label htmlFor="recruiter">Recruiter</Label>
-                            </div>
+                {/* Submit */}
+                {loading ? (
+                    <Button disabled className='w-full'>
+                        <Loader2 className='animate-spin mr-2' /> Please wait...
+                    </Button>
+                ) : (
+                    <Button type='submit' className='w-full'>Sign Up</Button>
+                )}
 
-                        </RadioGroup>
-
-
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <Label>Profile Photo </Label>
-                            <Input
-                                accept='image/*'
-                                type='file'
-                                name='file'
-                                className='cursor-pointer'
-                                onChange={handleFormFileChange}
-                            />
-                            {errors && errors.file && <span className='text-sm text-red-500'> {errors.file}</span>}
-                        </div>
-
-
-                    </div>
-                    {errors && errors.role && <span className='text-sm text-red-500 text-left block'> {errors.role}</span>}
-
-                    {
-                        loading ? <Button disabled className='w-full my-4'> <Loader2 className='mr-2 w-4 h-4 animate-spin' /> Please wait...</Button> : <Button type='submit' className='w-full my-4 cursor-pointer'>Sign up</Button>
-                    }
-
-                    <span className='text-sm cursor-pointer'>Already have an account? <Link to='/login' className='text-blue-600 hover:underline'>Login</Link></span>
-                </form>
-            </div>
+                <span className='text-sm'>
+                    Already have an account? <Link to='/login' className='text-blue-600'>Login</Link>
+                </span>
+            </form>
         </div>
-    )
-}
+    );
+};
 
-export default Signup
+export default Signup;
