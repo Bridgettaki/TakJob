@@ -43,64 +43,64 @@ const Signup = () => {
         setInput({ ...input, file: e.target.files?.[0] });
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        // Zod validation
-        const result = signupSchema.safeParse(input);
+    const result = signupSchema.safeParse(input);
 
-        if (!result.success) {
-            setErrors(result.error.flatten().fieldErrors);
-            return;
-        }
+    if (!result.success) {
+        setErrors(result.error.flatten().fieldErrors);
+        return;
+    }
 
-        setErrors({});
+    setErrors({});
 
-        // build form data
-        const formData = new FormData();
-        formData.append("fullName", input.fullName);
-        formData.append("email", input.email);
-        formData.append("phoneNumber", input.phoneNumber);
-        formData.append("password", input.password);
-        formData.append("role", input.role);
+    const formData = new FormData();
+    formData.append("fullName", input.fullName);
+    formData.append("email", input.email);
+    formData.append("phoneNumber", input.phoneNumber);
+    formData.append("password", input.password);
+    formData.append("role", input.role);
 
-        if (input.file) {
-            formData.append("file", input.file);
-        }
+    if (input.file) {
+        formData.append("file", input.file);
+    }
 
-        try {
-            dispatch(setLoading(true));
+    dispatch(setLoading(true));
 
-            console.log("Submitting signup...");
+    try {
+        console.log("Submitting signup...");
 
-            const res = await axios.post(
-                `${USER_API_ENDPOINT}/auth/register`,
-                formData,
-                {
-                    headers: { "Content-Type": "multipart/form-data" },
-                    withCredentials: true
-                }
-            );
-
-            if (res.data?.success) {
-                toast.success(res.data.message);
-                navigate('/login');
+        const res = await axios.post(
+            `${USER_API_ENDPOINT}/auth/register`, // ✅ FIXED ENDPOINT
+            formData,
+            {
+                headers: { "Content-Type": "multipart/form-data" },
+                withCredentials: true
             }
+        );
 
-        } catch (error) {
-            console.log("Signup error:", error);
+        console.log("SUCCESS:", res.data);
 
-            const message =
-                error?.response?.data?.message ||
-                error.message ||
-                "Signup failed. Try again.";
-
-            toast.error(message);
-
-        } finally {
-            dispatch(setLoading(false));
+        if (res.data?.success) {
+            toast.success(res.data.message);
+            navigate('/login');
         }
-    };
+
+    } catch (error) {
+        console.log("ERROR:", error?.response || error.message);
+
+        const message =
+            error?.response?.data?.message ||
+            error.message ||
+            "Signup failed. Try again.";
+
+        toast.error(message);
+
+    } finally {
+        dispatch(setLoading(false)); // ✅ ALWAYS STOPS LOADING
+    }
+};
 
     return (
         <div className='flex items-center justify-center max-w-7xl mx-auto'>
