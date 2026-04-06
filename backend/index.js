@@ -45,7 +45,7 @@ app.use(cors({
 const PORT = process.env.PORT || 3000;
 
 // --- API ROUTES ---
-app.use("/api/v1/users", userRoutes);
+app.use("/api/v1", routes);
 app.use("/api/v1/companies", companyRoutes);
 app.use("/api/v1/jobs", jobRoutes);
 app.use("/api/v1/applications", applicationRoutes);
